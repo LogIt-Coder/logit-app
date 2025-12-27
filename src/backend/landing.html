@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log It | Focus Software</title>
+    <style>
+        :root {
+            --bg: #000000;
+            --text: #ffffff;
+            --accent: #333;
+            --highlight: #4F46E5;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* NAVIGATION */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            border-bottom: 1px solid #222;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.5px;
+        }
+
+        .btn-login {
+            background: transparent;
+            color: #ccc;
+            border: 1px solid #444;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+        .btn-login:hover { border-color: white; color: white; }
+
+        /* HERO SECTION */
+        .hero {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .content {
+            max-width: 600px;
+        }
+
+        h1 {
+            font-size: 56px;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            background: -webkit-linear-gradient(left, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            font-size: 18px;
+            color: #888;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        /* SIGN UP CARD */
+        .signup-card {
+            background: #111;
+            border: 1px solid #222;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: left;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        .input-group { margin-bottom: 15px; }
+        
+        label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        
+        input:focus { border-color: #666; outline: none; }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: white;
+            color: black;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.2s;
+        }
+
+        .btn-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="brand">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            Log It.
+        </div>
+        <a href="/dashboard" class="btn-login">Login</a>
+    </nav>
+
+    <div class="hero">
+        <div class="content">
+            <h1>Stop micromanaging.<br>Start syncing.</h1>
+            <p>The effortless way to track employee focus without being annoying. Get started in seconds.</p>
+            
+            <div class="signup-card">
+                <div class="input-group">
+                    <label>Company Name</label>
+                    <input type="text" id="cName" placeholder="e.g. Acme Corp">
+                </div>
+                <div class="input-group">
+                    <label>Manager Username</label>
+                    <input type="text" id="uName" placeholder="e.g. Sarah">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="pass" placeholder="Create a secure password">
+                </div>
+                <button class="btn-submit" onclick="signup()">Create Workspace</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function signup() {
+            const company = document.getElementById('cName').value;
+            const user = document.getElementById('uName').value;
+            const pass = document.getElementById('pass').value;
+
+            if(!company || !user || !pass) return alert("Please fill in all fields.");
+
+            const btn = document.querySelector('.btn-submit');
+            btn.innerText = "Creating...";
+            btn.style.opacity = "0.7";
+
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ companyName: company, username: user, password: pass })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Save session
+                    localStorage.setItem('logit_code', data.companyCode);
+                    // Redirect to dashboard
+                    window.location.href = '/dashboard';
+                } else {
+                    alert("Error: " + (data.message || "Could not create account"));
+                    btn.innerText = "Create Workspace";
+                }
+            } catch (error) {
+                alert("Server error. Is it running?");
+                btn.innerText = "Create Workspace";
+            }
+        }
+    </script>
+
+</body>
+</html>

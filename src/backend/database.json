@@ -1,0 +1,19 @@
+{
+  "companyName": "Nexr",
+  "credentials": {
+    "username": "Brodie",
+    "password": "admin"
+  },
+  "logs": [
+    {
+      "id": "mjl472dup19bg2sixps",
+      "user": "Brodie Dimevski",
+      "accomplishment": "10 calls",
+      "nextFocus": "5 deals closed",
+      "aiFeedback": "Log saved.",
+      "managerNote": "",
+      "timestamp": "2025-12-25T07:21:52.307Z"
+    }
+  ],
+  "currentGoal": ""
+}

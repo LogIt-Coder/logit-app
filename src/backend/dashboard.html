@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log It | SaaS</title>
+    <style>
+        :root { --sidebar-bg: #1a1a1a; --sidebar-text: #e0e0e0; --bg-color: #f4f6f8; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
+
+        /* AUTH SCREEN */
+        #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111; z-index: 99; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        .auth-card { background: white; padding: 40px; border-radius: 12px; width: 340px; text-align: center; }
+        .input-field { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn-black { width: 100%; padding: 12px; background: black; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .link { color: #666; font-size: 13px; cursor: pointer; text-decoration: underline; margin-top: 10px; display: block; }
+
+        /* APP */
+        #app-container { display: flex; width: 100%; opacity: 0; pointer-events: none; transition: 0.5s; }
+        #app-container.visible { opacity: 1; pointer-events: all; }
+        
+        .sidebar { width: 240px; background: var(--sidebar-bg); color: var(--sidebar-text); padding: 20px; display: flex; flex-direction: column; }
+        .code-display { background: #333; padding: 10px; border-radius: 6px; text-align: center; margin-bottom: 20px; border: 1px solid #444; }
+        .code-display span { display: block; font-size: 10px; color: #aaa; text-transform: uppercase; }
+        .code-display strong { font-size: 24px; color: #fff; letter-spacing: 2px; }
+
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .card { background: white; border-radius: 8px; padding: 20px; border: 1px solid #ddd; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 10px; background: #f9f9f9; font-size: 12px; color: #666; }
+        td { padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-overlay">
+        <h2 style="color:white; margin-bottom:20px;">Log It.</h2>
+
+        <div id="login-box">
+            <input type="text" id="loginUser" class="input-field" placeholder="Username">
+            <input type="password" id="loginPass" class="input-field" placeholder="Password">
+            <button class="btn-black" onclick="login()">Sign In</button>
+            <span class="link" onclick="toggleAuth()">Create Company Account</span>
+        </div>
+
+        <div id="signup-box" class="hidden">
+            <input type="text" id="signName" class="input-field" placeholder="Company Name">
+            <input type="text" id="signUser" class="input-field" placeholder="Manager Username">
+            <input type="password" id="signPass" class="input-field" placeholder="Password">
+            <button class="btn-black" onclick="signup()">Create Account</button>
+            <span class="link" onclick="toggleAuth()">Back to Login</span>
+        </div>
+    </div>
+
+    <div id="app-container">
+        <div class="sidebar">
+            <h2 style="color:white; margin:0 0 20px 0;">Log It.</h2>
+            
+            <div class="code-display">
+                <span>Company Code</span>
+                <strong id="displayCode">----</strong>
+            </div>
+
+            <p style="color:#666; font-size:12px;">Share this code with employees.</p>
+            <button class="btn-black" style="background:#333; margin-top:auto;" onclick="logout()">Logout</button>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h3>Team Overview</h3>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input id="goalInput" class="input-field" style="width:auto; flex:1; margin:0;" placeholder="Set Team Goal...">
+                    <button class="btn-black" style="width:auto;" onclick="setGoal()">Set</button>
+                </div>
+                <p id="currentGoal" style="color:#4F46E5; font-size:14px;"></p>
+            </div>
+
+            <div class="card" style="padding:0;">
+                <table id="logsTable">
+                    <thead><tr><th>Time</th><th>User</th><th>Accomplishment</th><th>Next</th><th>Action</th></tr></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000';
+        
+        // AUTHENTICATION
+        function toggleAuth() {
+            document.getElementById('login-box').classList.toggle('hidden');
+            document.getElementById('signup-box').classList.toggle('hidden');
+        }
+
+        async function signup() {
+            const res = await fetch(`${API}/signup`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    companyName: document.getElementById('signName').value,
+                    username: document.getElementById('signUser').value,
+                    password: document.getElementById('signPass').value
+                })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert(`Account Created! Your Company Code is: ${data.companyCode}`);
+                loginSuccess(data.companyCode);
+            }
+        }
+
+        async function login() {
+            const res = await fetch(`${API}/login`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    username: document.getElementById('loginUser').value,
+                    password: document.getElementById('loginPass').value
+                })
+            });
+            const data = await res.json();
+            if(data.success) loginSuccess(data.companyCode);
+            else alert("Invalid Credentials");
+        }
+
+        function loginSuccess(code) {
+            localStorage.setItem('logit_code', code);
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('app-container').classList.add('visible');
+            document.getElementById('displayCode').innerText = code;
+            loadData();
+        }
+
+        function logout() { localStorage.removeItem('logit_code'); location.reload(); }
+
+        // DATA LOADING
+        async function loadData() {
+            const code = localStorage.getItem('logit_code');
+            if(!code) return;
+            
+            const res = await fetch(`${API}/manager-view?code=${code}`);
+            const data = await res.json();
+            
+            document.getElementById('currentGoal').innerText = `Focus: ${data.currentGoal || 'None'}`;
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            (data.logs || []).reverse().forEach(log => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${new Date(log.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                        <td><strong>${log.user}</strong></td>
+                        <td>${log.accomplishment}</td>
+                        <td>${log.nextFocus}</td>
+                        <td><button onclick="deleteLog('${log.id}')" style="color:red; border:none; background:none; cursor:pointer;">✖</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function setGoal() {
+            const code = localStorage.getItem('logit_code');
+            await fetch(`${API}/set-goal`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ companyCode: code, goal: document.getElementById('goalInput').value })
+            });
+            loadData();
+        }
+
+        async function deleteLog(id) {
+            const code = localStorage.getItem('logit_code');
+            await fetch(`${API}/delete-log`, {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ companyCode: code, id })
+            });
+            loadData();
+        }
+
+        // Auto-login check
+        if(localStorage.getItem('logit_code')) loginSuccess(localStorage.getItem('logit_code'));
+        setInterval(loadData, 10000);
+    </script>
+</body>
+</html>
