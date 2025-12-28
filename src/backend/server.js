@@ -66,9 +66,9 @@ app.get('/', (req, res) => {
 // (Your app.post('/signup'...) starts below here - leave that alone)
 
 // 2. serve the landing page
-app.get('/', (req, res) => {
-    // If you renamed it to index.html, change 'landing.html' below to 'index.html'
-    res.sendFile(path.join(__dirname, '../../public/landing.html'));
+// Serve the Dashboard when someone goes to /dashboard
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/dashboard.html'));
 });
 
 app.post('/signup', async (req, res) => {
