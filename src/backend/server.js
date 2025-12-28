@@ -55,15 +55,15 @@ app.use(express.json());
 
 // --- ROUTES ---
 
-// Serve the website files from the 'public' folder
-app.use(express.static(path.join(__dirname, '../../public')));
-
-// Import the 'path' tool at the very top of your file (if not already there)
-const path = require('path');
-
 // 1. Tell the server to share files from the 'public' folder
-// We use '../../public' to go UP two levels (out of backend, out of src, into public)
 app.use(express.static(path.join(__dirname, '../../public')));
+
+// 2. Serve the Landing Page when someone visits the main link
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/landing.html'));
+});
+
+// (Your app.post('/signup'...) starts below here - leave that alone)
 
 // 2. serve the landing page
 app.get('/', (req, res) => {
