@@ -1,7 +1,6 @@
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
 const mongoose = require('mongoose'); 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
