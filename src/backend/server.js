@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -55,11 +56,12 @@ app.use(express.json());
 
 // --- ROUTES ---
 
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'landing.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+// Serve the website files from the 'public' folder
+app.use(express.static(path.join(__dirname, '../../public')));
 
-app.get('/system-status', (req, res) => {
-    res.json({ isOnline: true });
+// If anyone goes to the main link, give them the website
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/index.html'));
 });
 
 app.post('/signup', async (req, res) => {
