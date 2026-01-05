@@ -138,7 +138,7 @@
         async function loadData() {
             const code = localStorage.getItem('logit_code');
             if(!code) return;
-            
+         // ✅ CORRECT VERSION:
 const res = await fetch(`/manager-view?code=${code}`);
             const data = await res.json();
             
