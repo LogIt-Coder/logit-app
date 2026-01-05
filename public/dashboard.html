@@ -139,7 +139,7 @@
             const code = localStorage.getItem('logit_code');
             if(!code) return;
             
-            const res = await fetch(`${API}/manager-view?code=${code}`);
+const res = await fetch(`/manager-view?code=${code}`);
             const data = await res.json();
             
             document.getElementById('currentGoal').innerText = `Focus: ${data.currentGoal || 'None'}`;

@@ -1,115 +1,145 @@
-import { useState, useEffect } from 'react';
-import './App.css';
+import React, { useState, useEffect } from 'react';
 
 function App() {
-  const [step, setStep] = useState(0); // Step 0 = Setup
-  const [username, setUsername] = useState("");
-  const [companyCode, setCompanyCode] = useState("");
+  const [step, setStep] = useState(1);
+  const [companyCode, setCompanyCode] = useState(null);
   const [log, setLog] = useState("");
   const [nextFocus, setNextFocus] = useState("");
-  
   const [status, setStatus] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // --- STYLES (Fixes the "labelStyle is not defined" error) ---
+  const labelStyle = { fontSize: '14px', marginBottom: '5px', color: '#333', fontWeight: 'bold' };
+  const backBtnStyle = { flex: 1, padding: '8px', background: '#ccc', border: 'none', borderRadius: '4px', cursor: 'pointer', marginRight: '5px' };
+  const submitBtnStyle = { flex: 2, padding: '8px', background: '#333', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' };
+
+  // Check if user is already logged in
   useEffect(() => {
-    // Check if user is already setup
-    const savedName = localStorage.getItem("employeeName");
-    const savedCode = localStorage.getItem("companyCode");
-    
-    if (savedName && savedCode) {
-      setUsername(savedName);
+    const savedCode = localStorage.getItem('companyCode');
+    if (savedCode) {
       setCompanyCode(savedCode);
-      setStep(1); // Skip setup
+      setStep(2);
     }
   }, []);
 
-  const handleSetup = () => {
-    if (!username || !companyCode) return alert("Please fill all fields");
-    localStorage.setItem("employeeName", username);
-    localStorage.setItem("companyCode", companyCode);
-    setStep(1);
+  const handleLogin = () => {
+    if (!companyCode) return alert("Enter a code!");
+    localStorage.setItem('companyCode', companyCode);
+    setStep(2);
   };
 
-  const handleNext = () => setStep(step + 1);
-
   const handleSubmit = async () => {
-    if (!nextFocus) return alert("Enter focus");
-    setIsLoading(true); setStatus("Syncing...");
+    if (!nextFocus) return alert("Enter focus for next session");
+    setIsLoading(true);
+    setStatus("Syncing...");
 
     try {
-      const response = await fetch('http://localhost:3000/log-work', {
+      const response = await fetch('https://logit-gctm.onrender.com/log-work', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // SEND COMPANY CODE WITH LOG
-        body: JSON.stringify({ 
-          companyCode: companyCode, 
-          user: username, 
-          accomplishment: log, 
-          nextFocus: nextFocus, 
-          timestamp: new Date().toISOString() 
+        body: JSON.stringify({
+          companyCode: companyCode,
+          user: "Employee", // You can add a username input later if you want
+          accomplishment: log,
+          nextFocus: nextFocus,
+          timestamp: new Date().toISOString()
         }),
       });
 
-      const data = await response.json();
       if (response.ok) {
-        setStatus(""); 
-        setTimeout(() => { setLog(""); setNextFocus(""); setStep(1); setIsLoading(false); }, 2000); 
+        setStatus("Saved!");
+        setTimeout(() => {
+            setIsLoading(false);
+            setStatus("");
+            setLog(""); 
+            // Optional: Close window here
+        }, 1000);
       } else {
-        setStatus("Error: Check Code"); setIsLoading(false);
+        setStatus("Error saving.");
+        setIsLoading(false);
       }
-    } catch (error) { setStatus("Connection Failed"); setIsLoading(false); }
+    } catch (error) {
+      console.error(error);
+      setStatus("Network Error");
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('companyCode');
+    setCompanyCode(null);
+    setStep(1);
+    setStatus("");
   };
 
   return (
-    <div className="container" style={{textAlign: 'center', padding: '20px', fontFamily: 'Inter, sans-serif'}}>
+    <div style={{ width: '300px', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       
-      {/* HEADER */}
-      <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '20px'}}>
-        <img src="icon.png" width="24" /> 
-        <h3 style={{margin:0}}>Log It.</h3>
-      </div>
-
-      {/* STEP 0: ONBOARDING */}
-      {step === 0 && (
+      {/* STEP 1: LOGIN */}
+      {step === 1 && (
         <div>
-           <p style={labelStyle}>Setup Your Profile</p>
-           <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Your Name" style={inputStyle}/>
-           <input type="text" value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} placeholder="Company Code (Ask Manager)" style={inputStyle}/>
-           <button onClick={handleSetup} style={btnStyle}>Save Profile</button>
+          <h2>LogIt.</h2>
+          <p style={{fontSize: '12px', color: '#666'}}>Enter Company Code</p>
+          <input 
+            type="text" 
+            placeholder="e.g. 5396"
+            onChange={(e) => setCompanyCode(e.target.value)}
+            style={{ width: '100%', padding: '10px', marginBottom: '10px' }}
+          />
+          <button 
+            onClick={handleLogin}
+            style={{ width: '100%', padding: '10px', background: 'black', color: 'white', border: 'none', cursor: 'pointer' }}
+          >
+            Enter
+          </button>
         </div>
       )}
 
-      {/* STEP 1: LOG */}
-      {step === 1 && !isLoading && (
-        <div>
-          <p style={labelStyle}>Hi {username}, what did you do?</p>
-          <textarea rows="3" value={log} onChange={(e) => setLog(e.target.value)} placeholder="I finished..." style={inputStyle}/>
-          <button onClick={handleNext} style={btnStyle}>Next</button>
-          <p style={{fontSize:'10px', color:'#999', marginTop:'10px'}}>Code: {companyCode}</p>
-        </div>
-      )}
-
-      {/* STEP 2: FOCUS */}
+      {/* STEP 2: LOGGING */}
       {step === 2 && !isLoading && (
         <div>
+          <p style={labelStyle}>What did you accomplish?</p>
+          <textarea 
+            rows="3" 
+            value={log} 
+            onChange={(e) => setLog(e.target.value)} 
+            placeholder="Fixed the bug..." 
+            style={{ width: '100%', marginBottom: '10px', padding: '5px' }}
+          />
+
           <p style={labelStyle}>Focus for next 15 mins?</p>
-          <textarea rows="3" value={nextFocus} onChange={(e) => setNextFocus(e.target.value)} placeholder="Start working on..." style={inputStyle}/>
-          <div style={{display:'flex', gap:'5px'}}>
+          <textarea 
+            rows="2" 
+            value={nextFocus} 
+            onChange={(e) => setNextFocus(e.target.value)} 
+            placeholder="Start working on..." 
+            style={{ width: '100%', marginBottom: '10px', padding: '5px' }}
+          />
+
+          <div style={{ display: 'flex' }}>
              <button onClick={() => setStep(1)} style={backBtnStyle}>Back</button>
-             <button onClick={handleSubmit} style={submitBtnStyle}>Log It</button>
+             <button onClick={handleSubmit} style={submitBtnStyle}>Log Work</button>
           </div>
+
+          <button 
+            onClick={handleLogout} 
+            style={{ marginTop: '20px', background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '12px', width: '100%' }}
+          >
+            (Change Company)
+          </button>
         </div>
       )}
 
-      {isLoading && <p style={{color:'#666'}}>{status}</p>}
+      {/* LOADING STATE */}
+      {isLoading && (
+        <div style={{textAlign: 'center', marginTop: '50px'}}>
+            <h3>Log It.</h3>
+            <p>{status}</p>
+        </div>
+      )}
+
     </div>
   );
 }
-
-const labelStyle = { fontSize: '14px', fontWeight: '600', color: '#555', marginBottom: '10px', display: 'block' };
-const inputStyle = { width: '100%', padding: '10px', marginBottom: '10px', borderRadius: '6px', border: '1px solid #ddd', boxSizing: 'border-box' };
-const btnStyle = { width: '100%', padding: '10px', background: '#333', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' };
-const submitBtnStyle = { ...btnStyle, background: '#000' }; 
-const backBtnStyle = { ...btnStyle, background: '#999', width: '30%' };
 
 export default App;
